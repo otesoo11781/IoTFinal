@@ -2,24 +2,25 @@ import math
 
 client = {"userID" : None , "lung" : None , "lat" : None , "treasure" : set() , "distance" : [None , None] }    #client info
 
-treasures = [ {"lung" : 123.456 , "lat" : 23.5} , {"lung" : 123.789 , "lat" : 23.6} ]  #pos of treasures
+treasures = [ {"lung" : 120.2010902 , "lat" : 23.0410212} , {"lung" : 120.20123 , "lat" : 23.0410212} ]  #pos of treasures
 
 
 def updatePos(userID , lat , lung) :   #return value : true is nearby treasure , otherwise , false
+    nearby = False 
     if(userID == client["userID"]):
         client["lung"] = lung 
         client["lat"] = lat 
         i = 0
-        dmin = 1e9
         while i < len(treasures):
-            client["distance"][i] = distance(client["lung"] , client["lat"] , treasures[i]["lung"] , treasures[i]["lat"])
-            dmin = min(client["distance"][i] , dmin)
-        if(dmin <= 500 and dmin >= 0 ) :
-            return true
-        else :
-            return false
-    else :
-        return false 	
+            dnew =  distance(client["lat"] , client["lung"] , treasures[i]["lat"] , treasures[i]["lung"])
+            if nearby == False and dnew <= 0.03 and dnew >= 0 :
+                if client["distance"][i] == None : 
+                    nearby = True
+                elif client["distance"][i] >= 0.03 :
+                    nearby = True 
+            client["distance"][i] = dnew 
+            i += 1 
+    return nearby
 
 def distance(lat1 ,lung1  , lat2,  lung2):    #unit is km
     radlat1 = math.radians(lat1)
@@ -38,4 +39,14 @@ def getPos(userID) :    #return position of user when userID is exist , otherwis
     if(userID == client["userID"]) :
         return [client["lat"] , client["lung"]]
     else :
+        return None 
+
+def updateUser(userID) : #return true when update successfully , otherwise false
+    client["userID"] = userID 
+    return True
+	
+def treasureDistance(userID) :  #return a list of distance from treasures , return None if the userID doesn't exist 
+    if userID == client['userID'] : 
+        return client['distance']
+    else : 
         return None 

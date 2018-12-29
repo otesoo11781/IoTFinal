@@ -1,4 +1,4 @@
-import time, DAN, requests, random
+import time, DAN, requests, random ,GameInfo
 
 from io import open
 import pandas as pd
@@ -55,30 +55,57 @@ def handle_message(event):
     Msg = event.message.text
     if Msg == 'Hello, world': return
     print('GotMsg:{}'.format(Msg))
-
-    #line_bot_api.reply_message(event.reply_token,TextSendMessage(text="收到訊息!!"))   # Reply API example
-    DAN.push('msg-I' , Msg)
+	
+    cmd = Msg.split()
+    if cmd[0] == '!update' :
+        if GameInfo.updateUser(cmd[1]) :
+             for userId in user_id_set:
+                line_bot_api.push_message(userId, TextSendMessage(text='Update userID : "' + cmd[1] + '"Successfully!'))
+    elif cmd[0] == '!position' : 
+        pos = GameInfo.getPos(GameInfo.client['userID']) 
+        if pos == None :
+            for userId in user_id_set:
+                line_bot_api.push_message(userId, TextSendMessage(text='Please set your userID first by typing !update <your_name>'))
+        elif pos[0] != None and pos[1] != None : 
+            for userId in user_id_set:
+                line_bot_api.push_message(userId, TextSendMessage(text='lat : ' + str(pos[0]) + ' lung : ' + str(pos[1])))      	
+        else : 
+            for userId in user_id_set:
+                line_bot_api.push_message(userId, TextSendMessage(text='Please confirm your tracking app or GPS work properly!'))      
+    elif cmd[0] == '!distance' : 
+        d = GameInfo.treasureDistance(GameInfo.client['userID'])
+        if d == None : 
+            for userId in user_id_set:
+                line_bot_api.push_message(userId, TextSendMessage(text='Please set your userID first by typing !update <your_name>'))
+        elif d[0] != None and d[1] != None : 
+            for userId in user_id_set:
+                line_bot_api.push_message(userId, TextSendMessage(text='From 1st treasure : ' + str(d[0]) + ' km\nFrom 2nd treausre : ' + str(d[1]) +' km'))
+        else : 	
+            for userId in user_id_set:
+                line_bot_api.push_message(userId, TextSendMessage(text='Please confirm your tracking app or GPS work properly!'))
     userId = event.source.user_id
     if not userId in user_id_set:
         user_id_set.add(userId)
         saveUserId(userId)
 
-ServerURL = 'http://140.113.199.187:9999' #with no secure connection
+ServerURL = 'https://test.iottalk.tw' #with no secure connection
 #ServerURL = 'https://DomainName' #with SSL connection
-Reg_addr = "0416205_hi" #if None, Reg_addr = MAC address
+Reg_addr = "0416205" #if None, Reg_addr = MAC address
 
-DAN.profile['dm_name']='line'
-DAN.profile['df_list']=['msg-I' , 'msg-O']
+DAN.profile['dm_name']='Final_treasure'
+DAN.profile['df_list']=['position']
 DAN.profile['d_name']= None # None for autoNaming
 DAN.device_registration_with_retry(ServerURL, Reg_addr)
 
 def Iottalk_message():
     while True:
         try:
-            value1=DAN.pull('msg-O')
-            if value1 != None :
-                for userId in user_id_set:
-                    line_bot_api.push_message(userId, TextSendMessage(text=value1[0]))  # Push API example
+            value1=DAN.pull('position')
+            if value1 != None :  
+                nearby = GameInfo.updatePos(value1[0] , float(value1[1]) , float(value1[2]) )
+                if nearby :
+                    for userId in user_id_set:
+                        line_bot_api.push_message(userId, TextSendMessage(text='Treasure is nearby!!'))  # Push API example
 				
         except Exception as e:
             print(e)
