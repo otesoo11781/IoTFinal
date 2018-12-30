@@ -1,25 +1,27 @@
 import math
 
-client = {"username" : None , "lung" : None , "lat" : None  , "distance" : [None , None] }    #client info
+clients = { }    #client info key is lineID
 
+user_map = {}    #map username to lineID
 treasures = [ {"lung" : 120.2010902 , "lat" : 23.0410212} , {"lung" : 120.20123 , "lat" : 23.0410212} ]  #pos of treasures
 
 unlocked = set() #store the finded treasures
 
-def updatePos(username , lat , lung) :   #return value : true is nearby treasure , otherwise , false
-    nearby = False 
-    if(username == client["username"]):
-        client["lung"] = lung 
-        client["lat"] = lat 
+def updatePos(username , lat , lung) :   #return value : lineID is nearby treasure , otherwise , empty string
+    nearby = '' 
+    if(username in user_map):
+        lineID = user_map[username]
+        clients[lineID]["lung"] = lung 
+        clients[lineID]["lat"] = lat 
         i = 0
         while i < len(treasures):
-            dnew =  distance(client["lat"] , client["lung"] , treasures[i]["lat"] , treasures[i]["lung"])
-            if nearby == False and dnew <= 0.03 and dnew >= 0 :
-                if client["distance"][i] == None : 
-                    nearby = True
-                elif client["distance"][i] >= 0.03 :
-                    nearby = True 
-            client["distance"][i] = dnew 
+            dnew =  distance(clients[lineID]["lat"] , clients[lineID]["lung"] , treasures[i]["lat"] , treasures[i]["lung"])
+            if nearby == '' and dnew <= 0.03 and dnew >= 0 :
+                if clients[lineID]["distance"][i] == None : 
+                    nearby = lineID
+                elif clients[lineID]["distance"][i] >= 0.03 :
+                    nearby = lineID
+            clients[lineID]["distance"][i] = dnew 
             i += 1 
     return nearby
 
@@ -36,25 +38,35 @@ def distance(lat1 ,lung1  , lat2,  lung2):    #unit is km
 def addTreasures(index) :
     unlocked.add(index)
 	
-def getPos() :    #return position of user when username exists , otherwise , return None
-    if client["username"] != None :
-        return [client["lat"] , client["lung"]]
+def getPos(lineID) :    #return position of user when username exists , otherwise , return None
+    if clients[lineID]["username"] != None :
+        return [clients[lineID]["lat"] , clients[lineID]["lung"]]
     else :
         return None 
 
-def updateUser(username) : #return true when update successfully , otherwise false
-    client["username"] = username
-    return True
+def addUser(lineID):
+    clients[lineID] = {'username' : None , 'lung' : None , 'lat' : None , 'distance' : [None , None]}
 	
-def getDistance() :  #return a list of distance from treasures , return None if the username doesn't exist 
-    if  client['username'] != None: 
-        return client['distance']
+def updateUser(lineID , username) : #return true when update successfully , otherwise false
+    if clients[lineID]["username"] == username : 
+        return True
+    elif username  in user_map : #username has existed
+        return False
+    else :
+        user_map.pop(clients[lineID]['username'] , None)
+        user_map[username] = lineID	
+        clients[lineID]["username"] = username
+        return True
+	
+def getDistance(lineID) :  #return a list of distance from treasures , return None if the username doesn't exist 
+    if  clients[lineID]['username'] != None: 
+        return clients[lineID]['distance']
     else : 
         return None
 		
-def getUnlocked():
-    if client['username'] != None :
-        msg = 'You have hunted ' + str(len(unlocked)) + ' treasure(s) '
+def getUnlocked(lineID):
+    if clients[lineID]['username'] != None :
+        msg = 'You guys have hunted ' + str(len(unlocked)) + ' treasure(s) '
         for treasure in unlocked :
             msg += '\nNo.' + str(treasure+1) + 'is found!'
         return msg

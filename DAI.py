@@ -56,55 +56,50 @@ def handle_message(event):
     if Msg == 'Hello, world': return
     print('GotMsg:{}'.format(Msg))
 	
-    cmd = Msg.split()
-    if cmd[0] == '!update' and len(cmd) >= 2  :
-        if GameInfo.updateUser(cmd[1]) :
-             for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='Update username : "' + cmd[1] + '"Successfully!'))
-    elif cmd[0] == '!position' : 
-        pos = GameInfo.getPos() 
-        if pos == None :
-            for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='Please set your username first by typing !update <your_name>'))
-        elif pos[0] != None and pos[1] != None : 
-            for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='lat : ' + str(pos[0]) + ' lung : ' + str(pos[1])))      	
-        else : 
-            for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='Please confirm your tracking app or GPS work properly!'))      
-    elif cmd[0] == '!distance' : 
-        d = GameInfo.getDistance()
-        if d == None : 
-            for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='Please set your username first by typing !update <your_name>'))
-        elif d[0] != None and d[1] != None : 
-            for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='From 1st treasure : ' + str(d[0]) + ' km\nFrom 2nd treausre : ' + str(d[1]) +' km'))
-        else : 	
-            for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='Please confirm your tracking app or GPS work properly'))
-    elif cmd[0] == '!treasure' : 
-        unlocked = GameInfo.getUnlocked()
-        if unlocked == None :
-            for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='Please set your username first by typing !update <your_name>'))
-        else :
-            for userId in user_id_set:
-                    line_bot_api.push_message(userId, TextSendMessage(text= unlocked ) )
-    else : 
-        for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='Invalid command!'))
     userId = event.source.user_id
     if not userId in user_id_set:
         user_id_set.add(userId)
         saveUserId(userId)
+        GameInfo.addUser(userId)
+		
+    cmd = Msg.split()
+    if cmd[0] == '!update' and len(cmd) >= 2  :
+        if GameInfo.updateUser(userId ,cmd[1]) :
+            line_bot_api.push_message(userId, TextSendMessage(text='Update username : "' + cmd[1] + '"Successfully!!'))
+        else :
+            line_bot_api.push_message(userId, TextSendMessage(text='Username is duplicated !!'))
+    elif cmd[0] == '!position' : 
+        pos = GameInfo.getPos(userId) 
+        if pos == None :
+            line_bot_api.push_message(userId, TextSendMessage(text='Please set your username first by typing !update <your_name>'))
+        elif pos[0] != None and pos[1] != None : 
+            line_bot_api.push_message(userId, TextSendMessage(text='lat : ' + str(pos[0]) + '\nlung : ' + str(pos[1])))      	
+        else : 
+            line_bot_api.push_message(userId, TextSendMessage(text='Please confirm your tracking app or GPS work properly!!'))      
+    elif cmd[0] == '!distance' : 
+        d = GameInfo.getDistance(userId)
+        if d == None : 
+            line_bot_api.push_message(userId, TextSendMessage(text='Please set your username first by typing !update <your_name>'))
+        elif d[0] != None and d[1] != None : 
+            line_bot_api.push_message(userId, TextSendMessage(text='From 1st treasure : ' + str(d[0]) + ' km\nFrom 2nd treausre : ' + str(d[1]) +' km'))
+        else : 	
+            line_bot_api.push_message(userId, TextSendMessage(text='Please confirm your tracking app or GPS work properly'))
+    elif cmd[0] == '!treasure' : 
+        unlocked = GameInfo.getUnlocked(userId)
+        if unlocked == None :
+            line_bot_api.push_message(userId, TextSendMessage(text='Please set your username first by typing !update <your_name>'))
+        else :
+            line_bot_api.push_message(userId, TextSendMessage(text= unlocked ) )
+    else : 
+        line_bot_api.push_message(userId, TextSendMessage(text='Invalid command!!'))
+
 
 @app.route('/<int:index>' , methods = ['GET'])
 def treasure(index) :
     if index < len(GameInfo.treasures) : 
         GameInfo.addTreasures(index)
         for userId in user_id_set:
-            line_bot_api.push_message(userId, TextSendMessage(text='Congradulation!! You find No.' + str(index+1) + ' treausre!!'))
+            line_bot_api.push_message(userId, TextSendMessage(text='Congradulation!! Someone find No.' + str(index+1) + ' treausre!!'))
         return render_template('treasure'+str(index+1)+'.html')   #return a description(html) about the treasure
     else :
         return 'Oops! You find a imitation! >_<'
@@ -125,8 +120,7 @@ def Iottalk_message():
             if value1 != None :  
                 nearby = GameInfo.updatePos(value1[0] , float(value1[1]) , float(value1[2]) )
                 if nearby :
-                    for userId in user_id_set:
-                        line_bot_api.push_message(userId, TextSendMessage(text='Treasure is nearby!!'))  # Push API example
+                    line_bot_api.push_message(nearby, TextSendMessage(text='Treasure is nearby!!'))  # Push API example
 				
         except Exception as e:
             print(e)
@@ -147,6 +141,7 @@ if __name__ == "__main__":
     try:
         for userId in user_id_set:
             line_bot_api.push_message(userId, TextSendMessage(text='LineBot is ready for you.'))  # Push API example
+            GameInfo.addUser(userId)
     except Exception as e:
         print(e)
     t = threading.Thread(target=Iottalk_message)
