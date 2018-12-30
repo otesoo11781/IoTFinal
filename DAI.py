@@ -3,7 +3,7 @@ import time, DAN, requests, random ,GameInfo
 from io import open
 import pandas as pd
 from bs4 import BeautifulSoup
-from flask import Flask, request, abort
+from flask import Flask, request, abort , render_template
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError 
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
@@ -105,7 +105,7 @@ def treasure(index) :
         GameInfo.addTreasures(index)
         for userId in user_id_set:
             line_bot_api.push_message(userId, TextSendMessage(text='Congradulation!! You find No.' + str(index+1) + ' treausre!!'))
-        return 'Congradulation!! You find No.' + str(index+1) + ' treausre!!'   #return a description(html) about the treasure
+        return render_template('treasure'+str(index+1)+'.html')   #return a description(html) about the treasure
     else :
         return 'Oops! You find a imitation! >_<'
 
