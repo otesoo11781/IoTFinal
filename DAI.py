@@ -57,15 +57,15 @@ def handle_message(event):
     print('GotMsg:{}'.format(Msg))
 	
     cmd = Msg.split()
-    if cmd[0] == '!update' :
+    if cmd[0] == '!update' and len(cmd) >= 2  :
         if GameInfo.updateUser(cmd[1]) :
              for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='Update userID : "' + cmd[1] + '"Successfully!'))
+                line_bot_api.push_message(userId, TextSendMessage(text='Update username : "' + cmd[1] + '"Successfully!'))
     elif cmd[0] == '!position' : 
-        pos = GameInfo.getPos(GameInfo.client['userID']) 
+        pos = GameInfo.getPos() 
         if pos == None :
             for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='Please set your userID first by typing !update <your_name>'))
+                line_bot_api.push_message(userId, TextSendMessage(text='Please set your username first by typing !update <your_name>'))
         elif pos[0] != None and pos[1] != None : 
             for userId in user_id_set:
                 line_bot_api.push_message(userId, TextSendMessage(text='lat : ' + str(pos[0]) + ' lung : ' + str(pos[1])))      	
@@ -73,20 +73,41 @@ def handle_message(event):
             for userId in user_id_set:
                 line_bot_api.push_message(userId, TextSendMessage(text='Please confirm your tracking app or GPS work properly!'))      
     elif cmd[0] == '!distance' : 
-        d = GameInfo.treasureDistance(GameInfo.client['userID'])
+        d = GameInfo.getDistance()
         if d == None : 
             for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='Please set your userID first by typing !update <your_name>'))
+                line_bot_api.push_message(userId, TextSendMessage(text='Please set your username first by typing !update <your_name>'))
         elif d[0] != None and d[1] != None : 
             for userId in user_id_set:
                 line_bot_api.push_message(userId, TextSendMessage(text='From 1st treasure : ' + str(d[0]) + ' km\nFrom 2nd treausre : ' + str(d[1]) +' km'))
         else : 	
             for userId in user_id_set:
-                line_bot_api.push_message(userId, TextSendMessage(text='Please confirm your tracking app or GPS work properly!'))
+                line_bot_api.push_message(userId, TextSendMessage(text='Please confirm your tracking app or GPS work properly'))
+    elif cmd[0] == '!treasure' : 
+        unlocked = GameInfo.getUnlocked()
+        if unlocked == None :
+            for userId in user_id_set:
+                line_bot_api.push_message(userId, TextSendMessage(text='Please set your username first by typing !update <your_name>'))
+        else :
+            for userId in user_id_set:
+                    line_bot_api.push_message(userId, TextSendMessage(text= unlocked ) )
+    else : 
+        for userId in user_id_set:
+                line_bot_api.push_message(userId, TextSendMessage(text='Invalid command!'))
     userId = event.source.user_id
     if not userId in user_id_set:
         user_id_set.add(userId)
         saveUserId(userId)
+
+@app.route('/<int:index>' , methods = ['GET'])
+def treasure(index) :
+    if index < len(GameInfo.treasures) : 
+        GameInfo.addTreasures(index)
+        for userId in user_id_set:
+            line_bot_api.push_message(userId, TextSendMessage(text='Congradulation!! You find No.' + str(index+1) + ' treausre!!'))
+        return 'Congradulation!! You find No.' + str(index+1) + ' treausre!!'   #return a description(html) about the treasure
+    else :
+        return 'Oops! You find a imitation! >_<'
 
 ServerURL = 'https://test.iottalk.tw' #with no secure connection
 #ServerURL = 'https://DomainName' #with SSL connection

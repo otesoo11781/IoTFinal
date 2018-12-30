@@ -1,13 +1,14 @@
 import math
 
-client = {"userID" : None , "lung" : None , "lat" : None , "treasure" : set() , "distance" : [None , None] }    #client info
+client = {"username" : None , "lung" : None , "lat" : None  , "distance" : [None , None] }    #client info
 
 treasures = [ {"lung" : 120.2010902 , "lat" : 23.0410212} , {"lung" : 120.20123 , "lat" : 23.0410212} ]  #pos of treasures
 
+unlocked = set() #store the finded treasures
 
-def updatePos(userID , lat , lung) :   #return value : true is nearby treasure , otherwise , false
+def updatePos(username , lat , lung) :   #return value : true is nearby treasure , otherwise , false
     nearby = False 
-    if(userID == client["userID"]):
+    if(username == client["username"]):
         client["lung"] = lung 
         client["lat"] = lat 
         i = 0
@@ -32,21 +33,30 @@ def distance(lat1 ,lung1  , lat2,  lung2):    #unit is km
     s = round(s , 3)
     return s 
 	
-def findTreasures(index) :
-    client["treasure"].add(index)
+def addTreasures(index) :
+    unlocked.add(index)
 	
-def getPos(userID) :    #return position of user when userID is exist , otherwise , return None
-    if(userID == client["userID"]) :
+def getPos() :    #return position of user when username exists , otherwise , return None
+    if client["username"] != None :
         return [client["lat"] , client["lung"]]
     else :
         return None 
 
-def updateUser(userID) : #return true when update successfully , otherwise false
-    client["userID"] = userID 
+def updateUser(username) : #return true when update successfully , otherwise false
+    client["username"] = username
     return True
 	
-def treasureDistance(userID) :  #return a list of distance from treasures , return None if the userID doesn't exist 
-    if userID == client['userID'] : 
+def getDistance() :  #return a list of distance from treasures , return None if the username doesn't exist 
+    if  client['username'] != None: 
         return client['distance']
     else : 
-        return None 
+        return None
+		
+def getUnlocked():
+    if client['username'] != None :
+        msg = 'You have hunted ' + str(len(unlocked)) + ' treasure(s) '
+        for treasure in unlocked :
+            msg += '\nNo.' + str(treasure+1) + 'is found!'
+        return msg
+    else :
+        return None
