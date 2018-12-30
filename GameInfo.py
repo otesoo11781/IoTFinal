@@ -68,7 +68,7 @@ def getUnlocked(lineID):
     if clients[lineID]['username'] != None :
         msg = 'You guys have hunted ' + str(len(unlocked)) + ' treasure(s) '
         for treasure in unlocked :
-            msg += '\nNo.' + str(treasure+1) + 'is found!'
+            msg += '\nNo.' + str(treasure+1) + ' is found!'
         return msg
     else :
         return None
