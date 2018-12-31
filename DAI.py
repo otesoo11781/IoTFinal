@@ -99,7 +99,7 @@ def treasure(index) :
     if index < len(GameInfo.treasures) : 
         GameInfo.addTreasures(index)
         for userId in user_id_set:
-            line_bot_api.push_message(userId, TextSendMessage(text='Congradulation!! Someone find No.' + str(index+1) + ' treausre!!'))
+            line_bot_api.push_message(userId, TextSendMessage(text='Congradulation!! Someone find No.' + str(index+1) + ' treasure!!'))
         return render_template('treasure'+str(index+1)+'.html')   #return a description(html) about the treasure
     else :
         return 'Oops! You find a imitation! >_<'
